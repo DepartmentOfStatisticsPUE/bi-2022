@@ -5,3 +5,4 @@
     + post-stratyfikacja -- [skrypty](notebooks/1-quasi-ps.ipynb)
     + kalibracja -- [skrypty](notebooks/2-quasi-cal.ipynb)
     + propensity score weighting -- [skrypty](notebooks/3-quasi-ps.ipynb)
+3. Web-scraping - [skrypty](notebooks/4-webscr.ipynb)
