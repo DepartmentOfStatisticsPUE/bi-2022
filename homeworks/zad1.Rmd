@@ -1,8 +1,10 @@
 ---
 title: "Zadanie domowe 1 -- badania interentowe"
 output:
-  pdf_document: default
+  html_document:
+    df_print: paged
   html_notebook: default
+  pdf_document: default
 ---
 
 **Zadanie domowe do wykonania w grupach projektowych**
@@ -15,7 +17,21 @@ output:
 
 1. Zakładamy, że badana populacja ma wielkość N=10000.
 
+```{r}
+N <- 10000
+```
+
+
 2. Tworzymy macierz zmiennych $\mathbf{X}$ o wymiarze $N \times (1+p)$ gdzie p=50 (czyli macierz z wyrazem wolnym, pierwsza kolumna składająca się z samych 1, oraz 50 zmiennych). Zakładamy, że 50 zmiennych generujemy *niezależnie* z rozkładu normalnego standaryzowanego.
+
+```{r}
+set.seed(123)
+p <- 50
+X <- matrix(data = rnorm(p*N), nrow = N, byrow = T)
+X <- cbind(1,X)
+epsilon <- rnorm(N)
+```
+
 
 3. Zmienna celu $Y$ jest utworzona w następujący sposób:
 
@@ -25,6 +41,16 @@ Y_i = 1 + \exp\{ 3 \sin(\mathbf{\beta}^T\mathbf{X}_i)\} + X_{i5} + X_{i6}  + \ep
 $$
 gdzie $X_{i5}$ i $X_{i6}$ to 5 i 6 zmienna z macierzy wektor $\mathbf{X}$ nie licząc wyrazu wolnego, $\mathbf{\beta} = (1, 0, 0, 1,1,1,1,0,...,0)^T$ o wymiarach $p+1$ (pierwszy element to $\beta_0$ czyli wykraz wolny). Oznacza to, że w wektorze $\mathbf{\beta}$ tylko wyraz wolny oraz 4-7 elementy są niezerowe (od 3 do 6 zmiennej). Uwaga wektor $\mathbf{X}_i$ ma wymiar $(p+1) \times 1$ dzięki temu w wyniku $\mathbf{\beta}^T\mathbf{X}_i)$ otrzymujemy skalar.
 
+
+```{r}
+betas <- c(1, 0, 0, 1,1,1,1,0)
+betas <- c(betas, rep(0, p+1 - length(betas)))
+length(betas)
+y <- 1 + exp(3*sin(X %*% betas)) + X[,6] + X[, 7] + epsilon
+y <- as.numeric(y)
+```
+
+
 4. Tworzymy dwie próby:
 
 Próba A - próba losowa o wielkości $n_A=500$, w której jednostki badanej populacji są losowane proporcjonalnie do prawdopodobieństwa określonego następująco:
@@ -32,6 +58,11 @@ Próba A - próba losowa o wielkości $n_A=500$, w której jednostki badanej pop
 $$
 \pi_{iA} \propto \frac{0.25 + |X_{i1}| + 0.03|Y_i|}{\sum_{i=1}^N 0.25 + |X_{i1}| + 0.03|Y_i|}
 $$
+```{r}
+pi_a_eta  <- 0.25 + abs(X[,2]) + 0.03*abs(y)
+pi_a <- pi_a_eta/ sum(pi_a_eta)
+summary(pi_a)
+```
 
 Próba B - przynależność do próby nielosowej o wielkości $n_B=2000$ wylosowana z rozkładu Bernoulliego gdzie $\pi_B$ określono następującym modelem nieliniowej regresji logistycznej
 
@@ -39,6 +70,16 @@ $$
 \pi_{iB} = \frac{\exp\left\{3.5 + \mathbf{\alpha}^T\log(\mathbf{X}_i^2)-\sin(X_{i3} + X_{i4}) - X_{i5} - X_{i6}\right\}}{1 + \exp\left\{3.5 + \mathbf{\alpha}^T\log(\mathbf{X}_i^2)-\sin(X_{i3} + X_{i4}) - X_{i5} - X_{i6}\right\}}
 $$
 gdzie $\alpha = (0,0,0,3,3,3,3,...,0)^T$ oznacza parametry stojące przy macierzy $\log(\mathbf{X}^2)$.
+
+```{r}
+alphas <- c(0,0,0,3,3,3,3)
+alphas <- c(alphas, rep(0, p + 1 - length(alphas)))
+length(alphas)
+pi_b_eta <- 3.5 + log(X^2) %*% alphas - sin(X[,4] + X[,5] - X[,6] - X[,7])
+pi_b <- exp(pi_b_eta) / (1 + exp(pi_b_eta))
+pi_b <- as.numeric(pi_b)
+summary(pi_b)
+```
 
 5. Celem jest oszacowanie średniej w populacji $y = \sum_{i=1}^{N} y_i / N$.
 
@@ -50,5 +91,72 @@ gdzie $\alpha = (0,0,0,3,3,3,3,...,0)^T$ oznacza parametry stojące przy macierz
 
 gdzie $w_i = 1/\pi_{iA}$, $n_A$ to wielkosć próby losowej, a $n_B$ to wielkość próby nielosowej.
 
+```{r}
+set.seed(123)
+B <- 500
+wynik <- matrix(data = 0, nrow = B, ncol = 2)
+for (i in 1:B) {
+  sample_a <- sample(1:N, size = 500, prob = pi_a)
+  sample_b <- rbinom(n = N, size = 1, prob = pi_b) ## około 2000
+  sample_b <- which(sample_b == 1)
+  wynik[i, 1] <- weighted.mean(x = y[sample_a], w = 1/pi_a[sample_a])
+  wynik[i, 2] <- mean(y[sample_b])
+}
+
+boxplot(wynik)
+```
+```{r}
+bias <- colMeans(wynik) - mean(y)
+vars <- apply(wynik, 2, var)
+mse <- bias^2 + vars
+rmse <- sqrt(mse)
+matrix(data = c(bias, vars,mse, rmse), 
+       ncol = 2, byrow = 2, 
+       dimnames = list(c("bias", "var", "mse", "rmse"),
+                       c("prob sample", "big data")))
+```
+
 
 Źródło: Yang, S., Kim, J. K., & Rui, S. (2020). Doubly robust inference when combining probability and non-probability samples with high dimensional. Journal of the Royal Statistical Society. Series B: Statistical Methodology, 82(2), 445–465. https://doi.org/10.1111/rssb.12354
+
+
+Cały kod
+
+```{r}
+set.seed(123)
+N <- 10000
+n_a <- 500
+## tworzenie macierzy X
+p <- 50
+X <- matrix(data = rnorm(p*N), nrow = N, byrow = T)
+X <- cbind(1,X)
+## tworzenie y
+epsilon <- rnorm(N)
+betas <- c(1, 0, 0, 1,1,1,1,0)
+betas <- c(betas, rep(0, p+1 - length(betas)))
+y <- 1 + exp(3*sin(X %*% betas)) + X[,6] + X[, 7] + epsilon
+y <- as.numeric(y)
+## tworzenie wektora pi_a
+pi_a_eta  <- 0.25 + abs(X[,2]) + 0.03*abs(y)
+pi_a <- pi_a_eta/ sum(pi_a_eta)
+alphas <- c(0,0,0,3,3,3,3)
+alphas <- c(alphas, rep(0, p + 1 - length(alphas)))
+## tworzenie wektora pi_b
+pi_b_eta <- 3.5 + log(X^2) %*% alphas - sin(X[,4] + X[,5] - X[,6] - X[,7])
+pi_b <- exp(pi_b_eta) / (1 + exp(pi_b_eta))
+pi_b <- as.numeric(pi_b)
+## symulacja
+B <- 500
+wynik <- matrix(data = 0, nrow = B, ncol = 2)
+for (i in 1:B) {
+  sample_a <- sample(1:N, size = 500, prob = pi_a)
+  sample_b <- rbinom(n = N, size = 1, prob = pi_b) ## około 2000
+  sample_b <- which(sample_b == 1)
+  wynik[i, 1] <- weighted.mean(x = y[sample_a], w = 1/pi_a[sample_a])
+  wynik[i, 2] <- mean(y[sample_b])
+}
+
+boxplot(wynik)
+
+```
+
