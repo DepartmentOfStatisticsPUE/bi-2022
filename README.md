@@ -6,3 +6,8 @@
     + kalibracja -- [skrypty](notebooks/2-quasi-cal.ipynb)
     + propensity score weighting -- [skrypty](notebooks/3-quasi-ps.ipynb)
 3. Web-scraping - [skrypty](notebooks/4-webscr.ipynb)
+4. Google Trends - [skrypty]()
+5. Metody oparte na modelu:
+    + metoda Rivers'a (najbliższego sąsiada) -- [skrypty]()
+    + masowa imputacja  -- [skrypty]()
+6. Estymatory podwójnie odporne -- [skrypty]()
