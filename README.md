@@ -9,5 +9,5 @@
 4. Google Trends - [skrypty]()
 5. Metody oparte na modelu:
     + metoda Rivers'a (najbliższego sąsiada) -- [skrypty](notebooks/5-model-rivers.ipynb)
-    + masowa imputacja  -- [skrypty]()
+    + masowa imputacja  -- [skrypty](notebooks/6-model-mi.ipynb)
 6. Estymatory podwójnie odporne -- [skrypty]()
