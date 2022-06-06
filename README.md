@@ -8,6 +8,6 @@
 3. Web-scraping - [skrypty](notebooks/4-webscr.ipynb)
 4. Google Trends - [skrypty]()
 5. Metody oparte na modelu:
-    + metoda Rivers'a (najbliższego sąsiada) -- [skrypty]()
+    + metoda Rivers'a (najbliższego sąsiada) -- [skrypty](notebooks/5-model-rivers.ipynb)
     + masowa imputacja  -- [skrypty]()
 6. Estymatory podwójnie odporne -- [skrypty]()
